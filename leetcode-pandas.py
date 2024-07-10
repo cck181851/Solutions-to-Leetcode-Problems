@@ -364,3 +364,33 @@ def find_investments(insurance: pd.DataFrame) -> pd.DataFrame:
     return pandas.DataFrame(
         {"tiv_2016":[round(total_inv_2016,2)]}
     )
+
+"""
+602. Friend Requests II: Who Has the Most Friends
+SQL Schema
+Table: RequestAccepted
+
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| requester_id   | int     |
+| accepter_id    | int     |
+| accept_date    | date    |
++----------------+---------+
+(requester_id, accepter_id) is the primary key (combination of columns with unique values) for this table.
+This table contains the ID of the user who sent the request, the ID of the user who received the request, and the date when the request was accepted.
+ 
+
+Write a solution to find the people who have the most friends and the most friends number.
+
+The test cases are generated so that only one person has the most friends.
+"""
+
+import pandas as pd
+
+#solution
+def most_friends(request_accepted: pd.DataFrame) -> pd.DataFrame:
+    left=request_accepted.groupby("requester_id")["accepter_id"].count().rename_axis("id")
+    right=request_accepted.groupby("accepter_id")["requester_id"].count().rename_axis("id")
+    
+    return left.add(right,fill_value=0).reset_index().rename(columns={0:"num"}).query("num==num.max()")
