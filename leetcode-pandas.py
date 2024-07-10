@@ -266,3 +266,101 @@ def gameplay_analysis(activity: pd.DataFrame) -> pd.DataFrame:
         {"fraction":[round(merged/activity["player_id"].nunique(),2)]}
     )
 
+"""
+570. Managers with at Least 5 Direct Reports
+SQL Schema
+Table: Employee
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| name        | varchar |
+| department  | varchar |
+| managerId   | int     |
++-------------+---------+
+id is the primary key (column with unique values) for this table.
+Each row of this table indicates the name of an employee, their department, and the id of their manager.
+If managerId is null, then the employee does not have a manager.
+No employee will be the manager of themself.
+ 
+
+Write a solution to find managers with at least five direct reports.
+
+Return the result table in any order.
+"""
+
+import pandas as pd
+
+#solution 1
+def find_managers(employee: pd.DataFrame) -> pd.DataFrame:
+    data=employee.groupby("managerId")["managerId"].count().loc[lambda x:x>=5].rename_axis("val")
+    return employee.merge(data,how="inner",left_on="id",right_on="val")[["name"]]
+
+#solution 2
+def find_managers(employee: pd.DataFrame) -> pd.DataFrame:
+    return employee.merge(
+        employee.groupby("managerId").agg(counting=("id","count")).query("counting>=5"),
+        left_on="id",
+        right_on="managerId"
+    )[["name"]]
+
+"""
+585. Investments in 2016
+SQL Schema
+Table: Insurance
+
++-------------+-------+
+| Column Name | Type  |
++-------------+-------+
+| pid         | int   |
+| tiv_2015    | float |
+| tiv_2016    | float |
+| lat         | float |
+| lon         | float |
++-------------+-------+
+pid is the primary key (column with unique values) for this table.
+Each row of this table contains information about one policy where:
+pid is the policyholder's policy ID.
+tiv_2015 is the total investment value in 2015 and tiv_2016 is the total investment value in 2016.
+lat is the latitude of the policy holder's city. It's guaranteed that lat is not NULL.
+lon is the longitude of the policy holder's city. It's guaranteed that lon is not NULL.
+ 
+
+Write a solution to report the sum of all total investment values in 2016 tiv_2016, for all policyholders who:
+
+have the same tiv_2015 value as one or more other policyholders, and
+are not located in the same city as any other policyholder (i.e., the (lat, lon) attribute pairs must be unique).
+Round tiv_2016 to two decimal places.
+"""
+
+import pandas as pd
+
+#solution 1
+def find_investments(insurance: pd.DataFrame) -> pd.DataFrame:
+    dup=insurance[insurance.duplicated(subset=["tiv_2015"],keep=False)].pid
+    sing=insurance.drop_duplicates(subset=["lat","lon"],keep=False).pid
+    
+    return insurance[
+        lambda x:(x["pid"].isin(sing) & x["pid"].isin(dup))
+    ][["tiv_2016"]].sum().to_frame("tiv_2016").round(2)
+
+#solution 2
+def find_investments(insurance: pd.DataFrame) -> pd.DataFrame:
+    data_tiv_2015=insurance.groupby(
+        "tiv_2015"
+    )["pid"].count().loc[lambda x:x>1]
+    
+    lat_lon=insurance.groupby(
+        ["lat","lon"]
+    )["pid"].count().loc[lambda x:x==1]
+    
+    total_inv_2016=insurance.merge(
+        data_tiv_2015,on="tiv_2015",how="inner"
+    ).merge(
+        lat_lon,on=["lat","lon"],how="inner"
+    )["tiv_2016"].sum()
+    
+    return pandas.DataFrame(
+        {"tiv_2016":[round(total_inv_2016,2)]}
+    )
