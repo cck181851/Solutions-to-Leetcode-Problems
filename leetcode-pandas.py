@@ -212,3 +212,57 @@ def department_highest_salary(employee: pd.DataFrame, department: pd.DataFrame) 
         columns={"name_dep":"Department","name_emp":"Employee","salary":"Salary"}
     )
 
+"""
+550. Game Play Analysis IV
+SQL Schema
+Table: Activity
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| player_id    | int     |
+| device_id    | int     |
+| event_date   | date    |
+| games_played | int     |
++--------------+---------+
+(player_id, event_date) is the primary key (combination of columns with unique values) of this table.
+This table shows the activity of players of some games.
+Each row is a record of a player who logged in and played a number of games (possibly 0) before logging out on someday using some device.
+ 
+
+Write a solution to report the fraction of players that logged in again on the day 
+after the day they first logged in, rounded to 2 decimal places. In other words, 
+you need to count the number of players that logged in for at least two consecutive 
+days starting from their first login date, then divide that number by the total number of players.
+"""
+
+import pandas as pd
+
+#solution 1
+def gameplay_analysis(activity: pd.DataFrame) -> pd.DataFrame:
+    activity["min"]=activity.groupby(
+        "player_id"
+    )["event_date"].transform(min)
+    filtered=activity.loc[
+        lambda x:(x["event_date"]-x["min"])==timedelta(days=1),"player_id"
+    ].nunique()
+    return pandas.DataFrame(
+        {"fraction":[round(filtered/activity["player_id"].nunique(),2)]}
+    )
+
+#solution 2 
+def gameplay_analysis(activity: pd.DataFrame) -> pd.DataFrame:
+    data=activity.groupby(
+        "player_id"
+    ).min()
+    
+    data["event_date"]=data["event_date"]+timedelta(days=1)
+    
+    merged=pandas.merge(
+        activity,data,on=["player_id","event_date"],how="inner"
+    )["player_id"].nunique()
+    
+    return pandas.DataFrame(
+        {"fraction":[round(merged/activity["player_id"].nunique(),2)]}
+    )
+
