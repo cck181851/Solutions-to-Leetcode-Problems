@@ -152,3 +152,63 @@ def consecutive_numbers(logs: pd.DataFrame) -> pd.DataFrame:
     data=logs.assign(isCons=logs.apply(f,axis=1))
     return data.loc[lambda x:x["isCons"],["num"]].rename(
         columns={"num":"ConsecutiveNums"}).drop_duplicates()
+
+"""
+184. Department Highest Salary
+Table: Employee
+
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| id           | int     |
+| name         | varchar |
+| salary       | int     |
+| departmentId | int     |
++--------------+---------+
+id is the primary key (column with unique values) for this table.
+departmentId is a foreign key (reference columns) of the ID from the Department table.
+Each row of this table indicates the ID, name, and salary of an employee. It also contains the ID of their department.
+ 
+
+Table: Department
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| name        | varchar |
++-------------+---------+
+id is the primary key (column with unique values) for this table. It is guaranteed that department name is not NULL.
+Each row of this table indicates the ID of a department and its name.
+ 
+
+Write a solution to find employees who have the highest salary in each of the departments.
+
+Return the result table in any order.
+"""
+
+import pandas as pd
+
+#solution 1
+def department_highest_salary(employee: pd.DataFrame, department: pd.DataFrame) -> pd.DataFrame:
+    data=employee.assign(highest=employee.groupby("departmentId")["salary"].transform(max)).loc[
+        lambda x:x["salary"]==x["highest"]]
+    return data.merge(department,left_on="departmentId",right_on="id",how="inner")[
+        ["name_y","name_x","salary"]
+    ].rename(columns={"name_y":"Department","name_x":"Employee","salary":"Salary"})
+
+#solution 2 
+def department_highest_salary(employee: pd.DataFrame, department: pd.DataFrame) -> pd.DataFrame:
+    data=employee.groupby(
+        "departmentId"
+    )["salary"].max().reset_index()
+    
+    merged=pandas.merge(
+        employee,data,on=["departmentId","salary"],how="inner"
+    )[["name","salary","departmentId"]]
+    
+    return pandas.merge(department,merged,left_on="id",right_on="departmentId",how="inner",suffixes=("_dep","_emp"))[
+        ["name_dep","name_emp","salary"]].rename(
+        columns={"name_dep":"Department","name_emp":"Employee","salary":"Salary"}
+    )
+
