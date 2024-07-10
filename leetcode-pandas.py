@@ -73,3 +73,82 @@ def nth_highest_salary(employee: pd.DataFrame, N: int) -> pd.DataFrame:
 def nth_highest_salary(employee: pd.DataFrame, N: int) -> pd.DataFrame:
     data=employee["salary"].sort_values(ascending=False).drop_duplicates()
     return pandas.DataFrame({"getNthHighestSalary("+str(N)+")":[None if data.shape[0]<N or N<=0 else data.iloc[N-1]]})
+ 
+"""
+178. Rank Scores
+Table: Scores
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| score       | decimal |
++-------------+---------+
+id is the primary key (column with unique values) for this table.
+Each row of this table contains the score of a game. Score is a floating point value with two decimal places.
+ 
+
+Write a solution to find the rank of the scores. The ranking should be calculated according to the following rules:
+
+The scores should be ranked from the highest to the lowest.
+If there is a tie between two scores, both should have the same ranking.
+After a tie, the next ranking number should be the next consecutive integer value. In other words, there should be no holes between ranks.
+Return the result table ordered by score in descending order.
+"""
+
+import pandas as pd
+
+#solution 1 
+def order_scores(scores: pd.DataFrame) -> pd.DataFrame:
+    scores.sort_values("score",inplace=True,axis=0,ascending=False)
+    cur,prev_val=0,-1
+    
+    def f(row):
+        nonlocal cur,prev_val
+        cur,prev_val=cur+(row.score!=prev_val),row.score
+        return cur
+    
+    return pandas.DataFrame({"score":scores["score"],"rank":scores.apply(f,axis=1)})
+
+#solution 2 
+def order_scores(scores: pd.DataFrame) -> pd.DataFrame:
+    data=scores.assign(rank=scores["score"].rank(method="dense",ascending=False))
+    return pandas.DataFrame({"score":data["score"],"rank":data["rank"]}).sort_values("score",ascending=False)
+
+"""
+180. Consecutive Numbers
+Table: Logs
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| num         | varchar |
++-------------+---------+
+In SQL, id is the primary key for this table.
+id is an autoincrement column.
+ 
+
+Find all numbers that appear at least three times consecutively.
+
+Return the result table in any order.
+
+The result format is in the following example.
+"""
+
+import pandas as pd
+
+#solution 1
+def consecutive_numbers(logs: pd.DataFrame) -> pd.DataFrame:
+    logs.sort_values("id",inplace=True)
+    prev2,prev1,prev2_id,prev1_id=-2,-2,-1,-1
+    
+    def f(row):
+        nonlocal prev2,prev1,prev2_id,prev1_id
+        res=(prev2==prev1==row.num) and (prev2_id==prev1_id-1==row.id-2)
+        prev2,prev1,prev2_id,prev1_id=prev1,row.num,prev1_id,row.id
+        return res
+    
+    data=logs.assign(isCons=logs.apply(f,axis=1))
+    return data.loc[lambda x:x["isCons"],["num"]].rename(
+        columns={"num":"ConsecutiveNums"}).drop_duplicates()
