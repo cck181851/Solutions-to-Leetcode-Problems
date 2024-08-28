@@ -227,8 +227,43 @@ select
 from helper2 
 inner join department on helper2.departmentId=department.id
 
-""" 
 
+ 
+"""
+ 196. Delete Duplicate Emails
+
+SQL Schema
+Table: Person
+
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| id          | int     |
+| email       | varchar |
++-------------+---------+
+id is the primary key (column with unique values) for this table.
+Each row of this table contains an email. The emails will not contain uppercase letters.
+ 
+
+Write a solution to delete all duplicate emails, keeping only one unique email with the smallest id.
+
+For SQL users, please note that you are supposed to write a DELETE statement and not a SELECT one.
+
+For Pandas users, please note that you are supposed to modify Person in place.
+
+After running your script, the answer shown is the Person table. The driver will first compile and run your piece of code and then show the Person table. The final order of the Person table does not matter.
+ """
+
+with helper as 
+ (select *,rank() over(partition by email order by id asc) 
+ as rnk from person),
+helper2 as 
+ (select id from helper where rnk=1)
+delete from 
+ person where id not in (select * from helper2) 
+ 
+ 
+"""
 262. Trips and Users
 
 SQL Schema
@@ -832,15 +867,7 @@ union
 
 """
 1934. Confirmation Rate
-Medium
 
-907
-
-81
-
-Add to List
-
-Share
 SQL Schema
 Table: Signups
 
@@ -934,4 +961,48 @@ select
 from products 
 inner join helper 
 using(product_id)
+ 
+ """
+1251. Average Selling Price
+
+SQL Schema
+Table: Prices
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| product_id    | int     |
+| start_date    | date    |
+| end_date      | date    |
+| price         | int     |
++---------------+---------+
+(product_id, start_date, end_date) is the primary key (combination of columns with unique values) for this table.
+Each row of this table indicates the price of the product_id in the period from start_date to end_date.
+For each product_id there will be no two overlapping periods. That means there will be no two intersecting periods for the same product_id.
+ 
+
+Table: UnitsSold
+
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| product_id    | int     |
+| purchase_date | date    |
+| units         | int     |
++---------------+---------+
+This table may contain duplicate rows.
+Each row of this table indicates the date, units, and product_id of each product sold. 
+ 
+
+Write a solution to find the average selling price for each product. average_price should be rounded to 2 decimal places.
+
+Return the result table in any order.
+ """
+
+select p.product_id,
+    round(ifnull(sum(price*units)/sum(units),0),2) as "average_price"
+from prices p 
+left join unitssold u on p.product_id=u.product_id and 
+p.start_date<=u.purchase_date and u.purchase_date<=end_date
+group by product_id
 
