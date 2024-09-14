@@ -84,4 +84,68 @@ class Solution:
             res+=[max(level,mx+level-1)]
         return res
                 
+"""
+1938. Maximum Genetic Difference Query
+
+There is a rooted tree consisting of n nodes numbered 0 to n - 1. Each node's number denotes its unique genetic value (i.e. the genetic value of node x is x). The genetic difference between two genetic values is defined as the bitwise-XOR of their values. You are given the integer array parents, where parents[i] is the parent for node i. If node x is the root of the tree, then parents[x] == -1.
+
+You are also given the array queries where queries[i] = [nodei, vali]. For each query i, find the maximum genetic difference between vali and pi, where pi is the genetic value of any node that is on the path between nodei and the root (including nodei and the root). More formally, you want to maximize vali XOR pi.
+
+Return an array ans where ans[i] is the answer to the ith query.
+"""
+
+class TrieNode:
+    def __init__(self):
+        self.children={}
+        self.freq=0
+    
+class Trie:
+    def __init__(self):
+        self.root=TrieNode()
+        
+    def add(self,num,f):
+        cur=self.root
+        for i in range(18,-1,-1):
+            bit=(num>>i)&1
+            if bit not in cur.children:
+                cur.children[bit]=TrieNode()
+            cur=cur.children[bit]
+            cur.freq+=f
+            
+    def getMax(self,num):
+        cur,val=self.root,0
+        for i in range(18,-1,-1):
+            bit=(num>>i)&1
+            if bit^1 in cur.children and cur.children[bit^1].freq>0:
+                val+=1<<i
+                cur=cur.children[bit^1]
+            elif bit^0 in cur.children and cur.children[bit^0].freq>0:
+                cur=cur.children[bit^0]
+        return val
+
+class Solution:
+    def maxGeneticDifference(self, parents: List[int], queries: List[List[int]]) -> List[int]:
+        t=Trie()
+        tree=defaultdict(list)
+        d=defaultdict(list)
+        for idx,[a,b] in enumerate(queries):
+            d[a]+=[[b,idx]]
+        ans=[-1]*len(queries)
+        
+        for child,par in enumerate(parents):
+            tree[par]+=[child]
+        
+        
+        def dfs(node):
+            t.add(node,1)
+            for val,idx in d[node]:
+                ans[idx]=t.getMax(val)
+            for child in tree[node]:
+                dfs(child)
+            t.add(node,-1)
+            
+        dfs([i for i in range(len(parents)) if parents[i]==-1][0])
+        return ans
+            
+            
             
