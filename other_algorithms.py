@@ -31,7 +31,9 @@ def merge(A,low,mid,high):
     for i in range(low,high+1):
         A[i]=cnt[i-low]
 
-print(mergeSort(A)) 
+#print(mergeSort(A)) 
+
+#--------------------------------------------------------
 
 #solution to unresolved recursive calls problem
 
@@ -55,5 +57,5 @@ def partition(A,low,high):
     A[i]=pivot 
     return i 
 
-quickSort(A,0,len(A)-1)
-print(A)  
+#quickSort(A,0,len(A)-1)
+#print(A)  
