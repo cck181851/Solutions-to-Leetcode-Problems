@@ -1,4 +1,4 @@
-#bottom up implementation of merge sort algorithm
+#bottom up implementation of merge sort algorithm 
 
 import numpy
 
@@ -35,7 +35,7 @@ def merge(A,low,mid,high):
 
 #--------------------------------------------------------
 
-#solution to unresolved recursive calls problem
+#solution to unresolved recursive calls problem of quick sort algorithm
 
 def quickSort(A,low,high):
     while low<high:
