@@ -1,6 +1,6 @@
 #bottom up implementation of merge sort algorithm 
 
-import numpy
+import numpy,math,itertools
 
 A=[numpy.random.randint(1,100) for _ in range(30)]
 
