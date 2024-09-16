@@ -1,6 +1,6 @@
-#bottom up implementation of merge sort algorithm 
+import numpy,math,itertools,time
 
-import numpy,math,itertools
+#bottom up implementation of merge sort algorithm 
 
 A=[numpy.random.randint(1,100) for _ in range(30)]
 
@@ -59,3 +59,46 @@ def partition(A,low,high):
 
 #quickSort(A,0,len(A)-1)
 #print(A)  
+
+#--------------------------------------------------------
+#bingo sort implementation
+
+def bingoSort(A):
+    minValue=min(A)
+    maxValue=max(A)
+    bingo=minValue 
+    nextBingo=maxValue 
+    nextAvail=0
+    while bingo<maxValue:
+        startPos=nextAvail 
+        for i in range(startPos,len(A)):
+            if A[i]==bingo:
+                A[nextAvail],A[i]=A[i],A[nextAvail]
+                nextAvail+=1
+            elif A[i]<nextBingo:
+                nextBingo=A[i]
+        bingo=nextBingo 
+        nextBingo=maxValue 
+
+#bingoSort(A)
+#print(A) 
+
+#-------------------------------------------------------
+#shell sort implementation
+
+def insertionSubSort(A,k):
+    for i in range(k,len(A)):
+        cur=A[i]
+        j=i-k 
+        while j>=0 and A[j]>cur:
+            A[j+k]=A[j]
+            j=j-k 
+        A[j+k]=cur 
+
+def shellSort(A,L):
+    for i in L:
+        insertionSubSort(A,i)
+
+#shellSort(A,[16,8,4,2,1])
+#print(A)  
+
