@@ -102,3 +102,68 @@ def shellSort(A,L):
 #shellSort(A,[16,8,4,2,1])
 #print(A)  
 
+#--------------------------------------------------------
+#efficient radix sort implementation using linked lists
+
+import math,numpy
+
+class listNode:
+    def __init__(self,val=None,next=None):
+        self.val=val 
+        self.next=next 
+
+#get the digit at the index i,pad the left part with 0's if needed 
+def getDigit(s,i):    
+    s="0"*(10-len(s)+1)+s 
+    try:
+        return int(s[i])
+    except:
+        return 0
+
+
+def radixSort(A):    
+    for idx in range(10,-1,-1):
+        front=[None for _ in range(10)]
+        back=[None for _ in range(10)]        
+        while A:
+            num=A.val
+            val=getDigit(str(num),idx)
+            cur=listNode(num)
+            if front[val] is None:
+                front[val]=back[val]=cur
+            else:
+                back[val].next=cur 
+                back[val]=cur 
+            A=A.next
+        p=0 
+        while front[p]==None:
+            p=p+1
+        start=front[p]
+        pre=p
+        while p<len(front):
+            p=p+1
+            while p<len(front) and front[p]==None:
+                p+=1 
+            if p<len(front):
+                back[pre].next=front[p]
+                pre=p
+        A=start       
+    return A    
+       
+#create the list
+A=listNode(-1)
+start=A
+for _ in range(1000):
+    node=listNode(numpy.random.randint(1,1000))
+    A.next=node 
+    A=node
+
+#sort the list 
+node=radixSort(start.next)
+
+#check whether it works correctly
+B=[]
+while node:
+    B+=[node.val]
+    node=node.next
+print(B==sorted(B))
