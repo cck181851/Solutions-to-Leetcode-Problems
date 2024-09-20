@@ -1,3 +1,6 @@
+from sortedcontainers import SortedList
+import itertools, functools, bisect 
+
 """
 1766. Tree of Coprimes
 There is a tree (i.e., a connected, undirected graph that has no cycles) consisting of n nodes numbered from 0 to n - 1 and exactly n - 1 edges. Each node has a value associated with it, and the root of the tree is node 0.
@@ -146,6 +149,185 @@ class Solution:
             
         dfs([i for i in range(len(parents)) if parents[i]==-1][0])
         return ans
+
+"""
+3013. Divide an Array Into Subarrays With Minimum Cost II
+
+You are given a 0-indexed array of integers nums of length n, and two positive integers k and dist.
+
+The cost of an array is the value of its first element. For example, the cost of [1,2,3] is 1 while the cost of [3,4,1] is 3.
+
+You need to divide nums into k disjoint contiguous subarrays, such that the difference between the starting index of the second subarray and the starting index of the kth subarray should be less than or equal to dist. In other words, if you divide nums into the subarrays nums[0..(i1 - 1)], nums[i1..(i2 - 1)], ..., nums[ik-1..(n - 1)], then ik-1 - i1 <= dist.
+
+Return the minimum possible sum of the cost of these subarrays.
+"""
+
+
+class Solution:
+    def minimumCost(self, nums: List[int], k: int, dist: int) -> int:
+        A=SortedList()
+        res,tot=math.inf,0
+        for i in range(1,len(nums)):
+            if i>1+dist:
+                idx=bisect_left(A,nums[i-dist-1])
+                if idx>=k-1:
+                    A.pop(idx)
+                else:
+                    tot-=A.pop(idx)
+                    if len(A)>=k-1:tot+=A[k-2]
+            if len(A)<k-1:
+                tot+=nums[i]
+            else:
+                idx=bisect_left(A,nums[i])
+                if idx<=k-2:
+                    tot+=nums[i]
+                    tot-=A[k-2]
+            A.add(nums[i])
+            if len(A)>=k-1:
+                res=min(res,nums[0]+tot)
+        return res
+
+        
+"""
+3041. Maximize Consecutive Elements in an Array After Modification
+
+You are given a 0-indexed array nums consisting of positive integers.
+
+Initially, you can increase the value of any element in the array by at most 1.
+
+After that, you need to select one or more elements from the final array such that those elements are consecutive when sorted in increasing order. For example, the elements [3, 4, 5] are consecutive while [3, 4, 6] and [1, 1, 2, 3] are not.
+Return the maximum number of elements that you can select.
+"""
+
+class Solution:
+    def maxSelectedElements(self, nums: List[int]) -> int:
+        nums.sort()
+    
+        @cache
+        def f(idx,inc):
+            if idx==len(nums):
+                return 0
+            cur=nums[idx]+inc
+            x=bisect_left(nums,cur,idx+1)
+            y=bisect_left(nums,cur+1,idx+1)
+            res=1
+            if x<len(nums) and nums[x]==cur:res=max(res,1+f(x,1))
+            if y<len(nums) and nums[y]==cur+1:res=max(res,1+f(y,0))
+            return res
+        
+        return max(max(f(i,1),f(i,0)) for i in range(len(nums)))
+
+
+"""
+3045. Count Prefix and Suffix Pairs II
+
+You are given a 0-indexed string array words.
+
+Let's define a boolean function isPrefixAndSuffix that takes two strings, str1 and str2:
+
+isPrefixAndSuffix(str1, str2) returns true if str1 is both a prefix and a suffix of str2, and false otherwise.
+For example, isPrefixAndSuffix("aba", "ababa") is true because "aba" is a prefix of "ababa" and also a suffix, but isPrefixAndSuffix("abc", "abcd") is false.
+
+Return an integer denoting the number of index pairs (i, j) such that i < j, and isPrefixAndSuffix(words[i], words[j]) is true.
+"""
+
+class TrieNode:
+    def __init__(self):
+        self.children={}
+        self.freq=0
+        self.idx=-1
+        
+class Trie:
+    def __init__(self):
+        self.root=TrieNode()
+        
+    def add(self,word,idx):
+        node=self.root
+        for w in word:
+            if w not in node.children:
+                node.children[w]=TrieNode()
+            node=node.children[w]
+        node.freq+=1
+        node.idx=idx
+        
+    def get(self,word,seen):
+        res,node=0,self.root
+        for w in word:
+            if w in node.children:
+                node=node.children[w]
+                res+=node.freq*(node.idx in seen)*(node.idx!=-1)
+                seen.add(node.idx)
+            else:break
+        return res
+
+
+class Solution:
+    def countPrefixSuffixPairs(self, words: List[str]) -> int:
+        pref,suf,res=Trie(),Trie(),0
+        for idx,w in enumerate(words):
+            seen=set()
+            res+=pref.get(w,seen)+suf.get(w[::-1],seen)
+            pref.add(w,idx)
+            suf.add(w[::-1],idx)
+        return res
+
+
             
+"""
+3187. Peaks in Array
+
+A peak in an array arr is an element that is greater than its previous and next element in arr.
+
+You are given an integer array nums and a 2D integer array queries.
+
+You have to process queries of two types:
+
+queries[i] = [1, li, ri], determine the count of peak elements in the subarray nums[li..ri].
+queries[i] = [2, indexi, vali], change nums[indexi] to vali.
+Return an array answer containing the results of the queries of the first type in order.
+Notes:
+
+The first and the last element of an array or a subarray cannot be a peak.
+"""
+
+class Solution:
+    def countOfPeaks(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        n=len(nums)
+        tree=[0]*(n+1)
+        
+        def check(idx):
+            return idx>0 and idx<n-1 and nums[idx-1]<nums[idx]>nums[idx+1]
+    
+        def add(idx,val):
+            idx+=1
+            while idx<len(tree):
+                tree[idx]+=val
+                idx+=idx&(-idx)
             
-            
+        def getVal(idx):
+            idx,res=idx+1,0
+            while idx>0:
+                res+=tree[idx]
+                idx-=idx&(-idx)
+            return res
+    
+        for i in range(1,n):
+            if check(i):
+                add(i,1)
+    
+        res=[]
+        for a,b,c in queries:
+            if a==1:
+                left=check(b)
+                right=check(c)
+                res+=[getVal(c)-(getVal(b-1) if b>0 else 0)-left-right if b!=c else 0]
+            else:
+                prev=[(b-1,check(b-1)),(b,check(b)),(b+1,check(b+1))]
+                nums[b]=c
+                cur=[(b-1,check(b-1)),(b,check(b)),(b+1,check(b+1))]
+                for a,b in zip(prev,cur):
+                    idx=b[0]
+                    change=b[1]-a[1]
+                    if idx>0:add(idx,change)
+                    
+        return res
