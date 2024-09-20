@@ -151,6 +151,424 @@ class Solution:
         return ans
 
 """
+2709. Greatest Common Divisor Traversal
+
+You are given a 0-indexed integer array nums, and you are allowed to traverse between its indices. You can traverse between index i and index j, i != j, if and only if gcd(nums[i], nums[j]) > 1, where gcd is the greatest common divisor.
+
+Your task is to determine if for every pair of indices i and j in nums, where i < j, there exists a sequence of traversals that can take us from i to j.
+
+Return true if it is possible to traverse between all such pairs of indices, or false otherwise.
+"""
+
+class Solution:
+    def canTraverseAllPairs(self, nums: List[int]) -> bool:
+        primes=[i for i in range(100001)]
+        for i in range(2,100001):
+            j=i+i
+            while j<len(primes):
+                if primes[j]==j:primes[j]=i
+                j+=i        
+        
+        
+        if 1 in nums:
+            return False if nums!=[1] else True
+
+        par={}
+        rank={}
+        
+        def find(x):
+            if x not in par:
+                par[x],rank[x]=x,1
+            while x!=par[x]:
+                x=par[x]
+            return par[x]
+        
+        def union(x,y):
+            px,py=find(x),find(y)
+            if rank[px]<rank[py]:
+                px,py=py,px
+            if px!=py:
+                rank[px]+=rank[py]
+                par[py]=px
+            
+        for num in nums:
+            prev=num
+            while num>=2:
+                prime=primes[num]
+                union(prev,prime)
+                prev=primes[num]
+                while not num%prime:
+                    num//=prime
+                
+        return len(set(find(x) for x in nums))==1
+
+
+"""
+2719. Count of Integers
+
+You are given two numeric strings num1 and num2 and two integers max_sum and min_sum. We denote an integer x to be good if:
+
+num1 <= x <= num2
+min_sum <= digit_sum(x) <= max_sum.
+Return the number of good integers. Since the answer may be large, return it modulo 109 + 7.
+
+Note that digit_sum(x) denotes the sum of the digits of x.
+"""
+
+class Solution:
+    def count(self, num1: str, num2: str, min_sum: int, max_sum: int) -> int:
+        mod=10**9+7
+        def helper(limit):
+            A=[int(i) for i in str(limit)]
+            @cache
+            def f(idx,tot,state):
+                if tot>max_sum:
+                    return 0
+                if idx==len(A):
+                    return tot>=min_sum
+                res=0
+                for i in range(10):
+                    if state==0 and i>A[idx]:break
+                    res+=f(idx+1,tot+i,1 if state==1 else i<A[idx])
+                return res%mod
+            return f(0,0,0)
+        return (helper(int(num2))-helper(int(num1)-1))%mod
+
+"""
+2736. Maximum Sum Queries
+
+You are given two 0-indexed integer arrays nums1 and nums2, each of length n, and a 1-indexed 2D array queries where queries[i] = [xi, yi].
+
+For the ith query, find the maximum value of nums1[j] + nums2[j] among all indices j (0 <= j < n), where nums1[j] >= xi and nums2[j] >= yi, or -1 if there is no j satisfying the constraints.
+
+Return an array answer where answer[i] is the answer to the ith query.
+"""
+
+class Solution:
+    def maximumSumQueries(self, nums1: List[int], nums2: List[int], queries: List[List[int]]) -> List[int]:
+        n=len(nums2)
+        tree=[-1]*4*n
+        
+        def add(left,right,idx,pos,val):
+            if left==right:
+                tree[idx]=val
+                return
+            mid=(left+right)//2
+            if pos<=mid:
+                add(left,mid,idx*2+1,pos,val)
+            else:
+                add(mid+1,right,idx*2+2,pos,val)
+            tree[idx]=max(tree[idx*2+1],tree[idx*2+2])
+            
+        def query(left,right,qleft,qright,idx):
+            if qright<left or right<qleft:
+                return -1
+            if qleft<=left<=right<=qright:
+                return tree[idx]
+            mid=(left+right)//2
+            i=query(left,mid,qleft,qright,idx*2+1)
+            j=query(mid+1,right,qleft,qright,idx*2+2)
+            return max(i,j)
+        
+        B=sorted(nums2)
+        c=defaultdict(list)
+        for idx,i in enumerate(B):
+            c[i].append(idx)
+        
+        A=sorted([i,idx] for idx,i in enumerate(nums1))
+        res,p=[-1]*len(queries),len(A)-1
+        for idx,[x,y] in sorted(enumerate(queries),key=lambda x:-x[1][0]):
+            while p>=0 and A[p][0]>=x:
+                ind=A[p][1]
+                p-=1
+                add(0,n,0,c[nums2[ind]].pop(),nums1[ind]+nums2[ind])
+            tmp_idx=bisect_left(B,y)
+            res[idx]=query(0,n,tmp_idx,n,0)
+        return res
+
+"""
+2781. Length of the Longest Valid Substring
+
+You are given a string word and an array of strings forbidden.
+
+A string is called valid if none of its substrings are present in forbidden.
+
+Return the length of the longest valid substring of the string word.
+
+A substring is a contiguous sequence of characters in a string, possibly empty.
+"""
+
+class Solution:
+    def longestValidSubstring(self, word: str, forbidden: List[str]) -> int:
+        A=[-1]*len(word)
+        mod=10**18+7
+        forbidden=set(sum(pow(26,idx,mod)*(ord(i)-96)%mod 
+                for idx,i in enumerate(f[::-1])) for f in forbidden)
+        
+        for i in range(len(word)):
+            cur=0
+            for j in range(10):
+                if i-j<0:break
+                cur+=(ord(word[i-j])-96)*pow(26,j,mod)
+                cur%=mod
+                if cur in forbidden:
+                    A[i]=max(A[i],i-j+1)
+                    break
+        
+        res=left=0
+        for i in range(len(word)):
+            left=max(left,A[i])
+            res=max(res,i-left+1)
+        return res
+                
+
+"""
+2842. Count K-Subsequences of a String With Maximum Beauty
+
+You are given a string s and an integer k.
+
+A k-subsequence is a subsequence of s, having length k, and all its characters are unique, i.e., every character occurs once.
+
+Let f(c) denote the number of times the character c occurs in s.
+
+The beauty of a k-subsequence is the sum of f(c) for every character c in the k-subsequence.
+
+For example, consider s = "abbbdd" and k = 2:
+
+f('a') = 1, f('b') = 3, f('d') = 2
+Some k-subsequences of s are:
+"abbbdd" -> "ab" having a beauty of f('a') + f('b') = 4
+"abbbdd" -> "ad" having a beauty of f('a') + f('d') = 3
+"abbbdd" -> "bd" having a beauty of f('b') + f('d') = 5
+Return an integer denoting the number of k-subsequences whose beauty is the maximum among all k-subsequences. Since the answer may be too large, return it modulo 109 + 7.
+
+A subsequence of a string is a new string formed from the original string by deleting some (possibly none) of the characters without disturbing the relative positions of the remaining characters.
+"""
+
+class Solution:
+    def countKSubsequencesWithMaxBeauty(self, s: str, k: int) -> int:
+        if k>len(set(s)):
+            return 0 
+        cnt=Counter(s)
+        A=sorted(cnt.items(),key=lambda x:-x[1])
+        tar=sum(i[1] for i in A[:k])
+        mod=10**9+7
+        
+        def f(idx,x):
+            if x<=0:
+                return x==0
+            if idx==len(A):
+                return int(x==0)
+            take=f(idx+1,x-1)*cnt[A[idx][0]]
+            go=f(idx+1,x)
+            return (take+go if idx+1<len(A) and A[idx+1][1]==A[idx][1] else take)%mod
+        
+        return f(0,k)
+
+
+"""
+2867. Count Valid Paths in a Tree
+
+There is an undirected tree with n nodes labeled from 1 to n. You are given the integer n and a 2D integer array edges of length n - 1, where edges[i] = [ui, vi] indicates that there is an edge between nodes ui and vi in the tree.
+
+Return the number of valid paths in the tree.
+
+A path (a, b) is valid if there exists exactly one prime number among the node labels in the path from a to b.
+
+Note that:
+
+The path (a, b) is a sequence of distinct nodes starting with node a and ending with node b such that every two adjacent nodes in the sequence share an edge in the tree.
+Path (a, b) and path (b, a) are considered the same and counted only once.
+"""
+
+class Solution:
+    def countPaths(self, n: int, edges: List[List[int]]) -> int:
+        A=list(range(100001))
+        for i in range(2,len(A)):
+            j=i+i
+            while j<len(A):
+                if A[j]==j:A[j]=i
+                j+=i
+        primes=set(i for i in A if i==A[i] and i>=2)
+        
+        
+        par,rank=list(range(n+1)),[1]*(n+1)
+        
+        def find(x):
+            while x!=par[x]:
+                x=par[x]
+            return par[x]
+        
+        def union(x,y):
+            px,py=find(x),find(y)
+            if px==py:return
+            if rank[py]>rank[px]:px,py=py,px
+            rank[px]+=rank[py]
+            par[py]=px
+        
+        res,d=0,defaultdict(list)
+        for a,b in edges:
+            if a not in primes and b not in primes:
+                union(a,b)
+            if a in primes and b not in primes:
+                d[a]+=[b]
+            if b in primes and a not in primes:
+                d[b]+=[a]
+                
+        for i in range(n+1):
+            if i not in primes:continue
+            tot=0
+            for j in d[i]:
+                x=rank[find(j)]
+                res+=tot*x
+                tot+=x
+            res+=tot
+        return res
+
+
+"""
+2935. Maximum Strong Pair XOR II
+
+You are given a 0-indexed integer array nums. A pair of integers x and y is called a strong pair if it satisfies the condition:
+
+|x - y| <= min(x, y)
+You need to select two integers from nums such that they form a strong pair and their bitwise XOR is the maximum among all strong pairs in the array.
+
+Return the maximum XOR value out of all possible strong pairs in the array nums.
+
+Note that you can pick the same integer twice to form a pair.
+"""
+
+class TrieNode:
+    def __init__(self):
+        self.children={}
+        self.val=0
+        
+class Trie:
+    def __init__(self):
+        self.root=TrieNode()
+        
+    def add(self,num,freq):
+        node=self.root
+        for i in range(20,-1,-1):
+            bit=(num>>i)&1
+            if bit not in node.children:
+                node.children[bit]=TrieNode()
+            node=node.children[bit]
+            node.val+=freq
+            
+    def getMax(self,x):
+        node,res=self.root,0
+        for i in range(20,-1,-1):
+            bit=(x>>i)&1
+            if bit^1 in node.children and node.children[bit^1].val:
+                node=node.children[bit^1]
+                res+=1<<i
+            elif bit^0 in node.children and node.children[bit^0].val:
+                node=node.children[bit^0]
+            else:
+                return -math.inf
+        return res
+
+class Solution:
+    def maximumStrongPairXor(self, nums: List[int]) -> int:
+        res=-math.inf
+        nums.sort()
+        l=0
+        t=Trie()
+        for r in range(len(nums)):
+            t.add(nums[r],1)
+            while nums[l]*2<nums[r]:
+                t.add(nums[l],-1)
+                l+=1
+            res=max(res,t.getMax(nums[r]))
+        return res
+
+
+"""
+2953. Count Complete Substrings
+
+You are given a string word and an integer k.
+
+A substring s of word is complete if:
+
+Each character in s occurs exactly k times.
+The difference between two adjacent characters is at most 2. That is, for any two adjacent characters c1 and c2 in s, the absolute difference in their positions in the alphabet is at most 2.
+Return the number of complete substrings of word.
+
+A substring is a non-empty contiguous sequence of characters in a string.
+"""
+
+class Solution:
+    def countCompleteSubstrings(self, word: str, k: int) -> int:
+        def f(x):
+            cnt=Counter()
+            found=left=res=chars=0
+            for idx,i in enumerate(word):
+                if idx>0 and abs(ord(word[idx])-ord(word[idx-1]))>2:
+                    cnt=Counter()
+                    found=chars=0
+                    left=idx
+                cnt[i]+=1
+                if cnt[i]==k:found+=1
+                chars+=1
+                if found==x:
+                    res+=1
+                if chars>=k*x:
+                    cnt[word[left]]-=1
+                    if cnt[word[left]]==k-1:found-=1
+                    left+=1
+                    chars-=1
+            return res
+        
+        return sum(f(i) for i in range(1,27))
+
+
+"""
+3008. Find Beautiful Indices in the Given Array II
+
+You are given a 0-indexed string s, a string a, a string b, and an integer k.
+
+An index i is beautiful if:
+
+0 <= i <= s.length - a.length
+s[i..(i + a.length - 1)] == a
+There exists an index j such that:
+0 <= j <= s.length - b.length
+s[j..(j + b.length - 1)] == b
+|j - i| <= k
+Return the array that contains beautiful indices in sorted order from smallest to largest.
+"""
+
+class Solution:
+    def beautifulIndices(self, s: str, a: str, b: str, k: int) -> List[int]:
+        def f(x):
+            cur,mod=0,10**9+9
+            for i in x:
+                cur=(cur*31+ord(i)-97)%mod
+            return cur
+        
+        def y(x,s,tar):
+            cur,mod=0,10**9+9
+            res=[]
+            for idx,i in enumerate(x):
+                cur=(cur*31+ord(i)-97)%mod
+                if idx>=len(s)-1:
+                    if cur==tar:res+=[idx-len(s)+1]
+                    cur=(cur-(ord(x[idx-len(s)+1])-97)*pow(31,len(s)-1,mod))%mod
+            return res
+                
+        av,bv,p=f(a),f(b),0
+        A,B,res=y(s,a,av),y(s,b,bv),[]
+        for idx in A:
+            while p<len(B) and B[p]<idx-k:
+                p+=1
+            if p<len(B) and abs(B[p]-idx)<=k:
+                res+=[idx]
+        return res
+
+
+"""
 3013. Divide an Array Into Subarrays With Minimum Cost II
 
 You are given a 0-indexed array of integers nums of length n, and two positive integers k and dist.
