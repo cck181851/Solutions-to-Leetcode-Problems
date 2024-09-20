@@ -151,6 +151,425 @@ class Solution:
         return ans
 
 """
+2163. Minimum Difference in Sums After Removal of Elements
+
+You are given a 0-indexed integer array nums consisting of 3 * n elements.
+
+You are allowed to remove any subsequence of elements of size exactly n from nums. The remaining 2 * n elements will be divided into two equal parts:
+
+The first n elements belonging to the first part and their sum is sumfirst.
+The next n elements belonging to the second part and their sum is sumsecond.
+The difference in sums of the two parts is denoted as sumfirst - sumsecond.
+
+For example, if sumfirst = 3 and sumsecond = 2, their difference is 1.
+Similarly, if sumfirst = 2 and sumsecond = 3, their difference is -1.
+Return the minimum difference possible between the sums of the two parts after the removal of n elements.
+"""
+
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        m=len(nums)
+        A,q,tot=[0]*m,[],0
+        for i in range(2*m//3):
+            tot+=nums[i]
+            heappush(q,-nums[i])
+            if len(q)>m//3:
+                tot+=heappop(q)
+            A[i]=tot
+        B,q,tot=[0]*m,[],0
+        for i in range(m-1,m//3-1,-1):
+            tot+=nums[i]
+            heappush(q,nums[i])
+            if len(q)>m//3:
+                tot-=heappop(q)
+            B[i]=tot
+        return min(A[i]-B[i+1] for i in range(m//3-1,2*m//3))
+
+"""
+2179. Count Good Triplets in an Array
+
+You are given two 0-indexed arrays nums1 and nums2 of length n, both of which are permutations of [0, 1, ..., n - 1].
+
+A good triplet is a set of 3 distinct values which are present in increasing order by position both in nums1 and nums2. In other words, if we consider pos1v as the index of the value v in nums1 and pos2v as the index of the value v in nums2, then a good triplet will be a set (x, y, z) where 0 <= x, y, z <= n - 1, such that pos1x < pos1y < pos1z and pos2x < pos2y < pos2z.
+
+Return the total number of good triplets.
+"""
+
+class BIT:
+    def __init__(self,n):
+        self.tree=[0]*(n+1)
+        
+    def add(self,val,x):
+        val+=1
+        while val<len(self.tree):
+            self.tree[val]+=x
+            val+=val&(-val)
+        
+    def get(self,val):
+        val,res=val+1,0
+        while val>0:
+            res+=self.tree[val]
+            val-=val&(-val)
+        return res
+        
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        res,n=0,len(nums2)
+        left,right=BIT(n),BIT(n)
+        
+        for i in nums2:
+            right.add(i,1)
+            
+        idx_map=defaultdict(list)
+        for idx,i in enumerate(nums2):
+            idx_map[i]+=[idx]
+            
+        for i in nums1:
+            idx=idx_map[i].pop()
+            right.add(idx,-1)
+            x=left.get(idx-1)
+            y=right.get(n-1)-right.get(idx)
+            res+=x*y
+            left.add(idx,1)
+            
+        return res
+
+
+"""
+2272. Substring With Largest Variance
+
+The variance of a string is defined as the largest difference between the number of occurrences of any 2 characters present in the string. Note the two characters may or may not be the same.
+
+Given a string s consisting of lowercase English letters only, return the largest variance possible among all substrings of s.
+
+A substring is a contiguous sequence of characters within a string.
+"""
+
+class Solution:
+    def largestVariance(self, s: str) -> int:
+        def f(x,y):
+            cnt=Counter()
+            left=leftMin=leftCur=res=cur=0
+            for idx,i in enumerate(s):
+                if i in [x,y]:cnt[i]+=1
+                cur+=1 if i==x else -1 if i==y else 0
+                while left<idx and (s[left] not in [x,y] or cnt[s[left]]>1):
+                    ch=s[left]
+                    leftCur+=1 if ch==x else -1 if ch==y else 0
+                    leftMin=min(leftMin,leftCur)
+                    if s[left] in [x,y]:cnt[s[left]]-=1
+                    left+=1
+                if len(cnt)==2:
+                    res=max(res,cur-leftMin)
+            return res
+        
+        A=set(s)
+        return max([f(x,y) for x in A for y in A if x!=y],default=0)
+
+"""
+2440. Create Components With Same Value
+
+There is an undirected tree with n nodes labeled from 0 to n - 1.
+
+You are given a 0-indexed integer array nums of length n where nums[i] represents the value of the ith node. You are also given a 2D integer array edges of length n - 1 where edges[i] = [ai, bi] indicates that there is an edge between nodes ai and bi in the tree.
+
+You are allowed to delete some edges, splitting the tree into multiple connected components. Let the value of a component be the sum of all nums[i] for which node i is in the component.
+
+Return the maximum number of edges you can delete, such that every connected component in the tree has the same value.
+"""
+
+class Solution:
+    def componentValue(self, nums: List[int], edges: List[List[int]]) -> int:
+        tree=defaultdict(list)
+        for a,b in edges:
+            tree[a]+=[b]
+            tree[b]+=[a]
+            
+        def f(node,par,tar):
+            cur=nums[node]
+            for child in tree[node]:
+                if child==par:continue
+                cur+=f(child,node,tar)
+            return 0 if cur==tar else cur
+        
+        sm=sum(nums)
+        for i in range(len(nums),0,-1):
+            if sm%i:continue
+            tar=sm//i
+            if f(0,-1,tar)==0:return i-1
+        return 0
+
+"""
+2444. Count Subarrays With Fixed Bounds
+
+You are given an integer array nums and two integers minK and maxK.
+
+A fixed-bound subarray of nums is a subarray that satisfies the following conditions:
+
+The minimum value in the subarray is equal to minK.
+The maximum value in the subarray is equal to maxK.
+Return the number of fixed-bound subarrays.
+
+A subarray is a contiguous part of an array.
+"""
+
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        res=0
+        for a in [nums]:
+            cnt=Counter()
+            left=start=0
+            for idx,i in enumerate(a):
+                if i in [minK,maxK]:
+                    cnt[i]+=1
+                elif i<minK or i>maxK:
+                    cnt=Counter()
+                    left=start=idx+1
+                    continue
+                while left<idx and not (a[left] in [minK,maxK] and cnt[a[left]]<=1):
+                    cnt[a[left]]-=1
+                    left+=1
+                if cnt[minK]>0 and cnt[maxK]>0:
+                    res+=left-start+1                
+        return res if minK<=maxK else 0
+
+"""
+2458. Height of Binary Tree After Subtree Removal Queries
+
+You are given the root of a binary tree with n nodes. Each node is assigned a unique value from 1 to n. You are also given an array queries of size m.
+
+You have to perform m independent queries on the tree where in the ith query you do the following:
+
+Remove the subtree rooted at the node with the value queries[i] from the tree. It is guaranteed that queries[i] will not be equal to the value of the root.
+Return an array answer of size m where answer[i] is the height of the tree after performing the ith query.
+
+Note:
+
+The queries are independent, so the tree returns to its initial state after each query.
+The height of a tree is the number of edges in the longest simple path from the root to some node in the tree.
+"""
+
+class Solution:
+    def treeQueries(self, root: Optional[TreeNode], queries: List[int]) -> List[int]:
+        d=defaultdict(list)
+        level_map={}
+        
+        def f(node,level):
+            if not node:
+                return 0
+            mx=1
+            level_map[node.val]=level
+            for child in [node.left,node.right]:
+                if child is None:continue
+                h=f(child,level+1)
+                d[level].append([node.val,child.val,h+1])
+                mx=max(mx,h+1)
+            d[level]=sorted(d[level],key=lambda x:-x[2])[:3]
+            return mx
+        
+        f(root,0)
+        res=[]
+        for q in queries:
+            level=level_map[q]-1
+            mx=-1
+            for node,child,h in d[level]:
+                if child==q:continue
+                mx=max(mx,h)
+            res+=[max(level,mx+level-1)]
+        return res
+
+"""
+2503. Maximum Number of Points From Grid Queries
+
+You are given an m x n integer matrix grid and an array queries of size k.
+
+Find an array answer of size k such that for each integer queries[i] you start in the top left cell of the matrix and repeat the following process:
+
+If queries[i] is strictly greater than the value of the current cell that you are in, then you get one point if it is your first time visiting this cell, and you can move to any adjacent cell in all 4 directions: up, down, left, and right.
+Otherwise, you do not get any points, and you end this process.
+After the process, answer[i] is the maximum number of points you can get. Note that for each query you are allowed to visit the same cell multiple times.
+
+Return the resulting array answer.
+"""
+
+class Solution:
+    def maxPoints(self, grid: List[List[int]], queries: List[int]) -> List[int]:
+        m,n=len(grid),len(grid[0])
+        par=[j+i*n for i in range(m) for j in range(n)]
+        rank=[0 for i in range(m*n)]
+        
+        def find(x):
+            while x!=par[x]:
+                x=par[x]
+            return x
+        
+        def union(x,y):
+            px,py=find(x),find(y)
+            if px==py:return
+            if rank[py]>rank[py]:px,py=py,px
+            par[py]=px
+            rank[px]+=rank[py]
+            
+        A=sorted((grid[x][y],x,y) for x in range(m) for y in range(n))
+        res=[0]*len(queries)
+        p=0
+        seen=[[0]*n for _ in range(m)]
+        for val,idx in sorted((val,idx) for idx,val in enumerate(queries)):
+            while p<len(A) and A[p][0]<val:
+                x,y=A[p][1],A[p][2]
+                seen[x][y]=1
+                rank[y+x*n]+=1
+                for xx,yy in [(x+1,y),(x,y+1),(x-1,y),(x,y-1)]:
+                    if 0<=xx<m and 0<=yy<n and seen[xx][yy]:
+                        union(xx*n+yy,x*n+y)
+                p+=1
+            res[idx]=rank[find(0)]
+        return res
+
+"""
+2518. Number of Great Partitions
+
+You are given an array nums consisting of positive integers and an integer k.
+
+Partition the array into two ordered groups such that each element is in exactly one group. A partition is called great if the sum of elements of each group is greater than or equal to k.
+
+Return the number of distinct great partitions. Since the answer may be too large, return it modulo 109 + 7.
+
+Two partitions are considered distinct if some element nums[i] is in different groups in the two partitions.
+"""
+
+class Solution:
+    def countPartitions(self, nums: List[int], k: int) -> int:
+        mod=10**9+7
+        
+        @cache
+        def f(idx,tot):
+            if idx==len(nums):
+                return 1
+            res=f(idx+1,tot)
+            if tot+nums[idx]<k:res+=f(idx+1,tot+nums[idx])
+            return res%mod
+        
+        return (pow(2,len(nums),mod)-2*f(0,0))%mod if sum(nums)>=2*k else 0
+
+"""
+2547. Minimum Cost to Split an Array
+
+You are given an integer array nums and an integer k.
+
+Split the array into some number of non-empty subarrays. The cost of a split is the sum of the importance value of each subarray in the split.
+
+Let trimmed(subarray) be the version of the subarray where all numbers which appear only once are removed.
+
+For example, trimmed([3,1,2,4,3,4]) = [3,4,3,4].
+The importance value of a subarray is k + trimmed(subarray).length.
+
+For example, if a subarray is [1,2,3,3,3,4,4], then trimmed([1,2,3,3,3,4,4]) = [3,3,3,4,4].The importance value of this subarray will be k + 5.
+Return the minimum possible cost of a split of nums.
+
+A subarray is a contiguous non-empty sequence of elements within an array.
+"""
+
+class Solution:
+    def minCost(self, nums: List[int], k: int) -> int:
+        @cache
+        def f(idx):
+            if idx==len(nums):
+                return 0
+            A,B=set(),set()
+            res,tot=math.inf,0
+            for j in range(idx,len(nums)):
+                x=nums[j]
+                if x not in A and x not in B:
+                    A.add(x)
+                elif x in A:
+                    tot+=2
+                    A.remove(x)
+                    B.add(x)
+                else:
+                    tot+=1
+                res=min(res,tot+k+f(j+1))
+            return res
+        return f(0)
+
+"""
+2577. Minimum Time to Visit a Cell In a Grid
+
+You are given a m x n matrix grid consisting of non-negative integers where grid[row][col] represents the minimum time required to be able to visit the cell (row, col), which means you can visit the cell (row, col) only when the time you visit it is greater than or equal to grid[row][col].
+
+You are standing in the top-left cell of the matrix in the 0th second, and you must move to any adjacent cell in the four directions: up, down, left, and right. Each move you make takes 1 second.
+
+Return the minimum time required in which you can visit the bottom-right cell of the matrix. If you cannot visit the bottom-right cell, then return -1.
+"""
+
+class Solution:
+    def minimumTime(self, grid: List[List[int]]) -> int:
+        m,n=len(grid),len(grid[0])
+        seen=[[math.inf]*n for _ in range(m)]
+        q=[(0,0,0)]
+        while q:
+            t,r,c=heappop(q)
+            if [r,c]==[m-1,n-1]:
+                return t
+            A=[(r+1,c),(r,c+1),(r-1,c),(r,c-1)]
+            h=any(0<=a<m and 0<=b<n and grid[a][b]<=(1+t) for a,b in A)
+            for nr,nc in A:
+                if 0<=nr<m and 0<=nc<n and h:
+                    nt=1+t if grid[nr][nc]<=(1+t) else grid[nr][nc]+(((grid[nr][nc]-t)%2)^1)
+                    if nt<seen[nr][nc]:
+                        heappush(q,[nt,nr,nc])
+                        seen[nr][nc]=nt
+        return -1
+
+"""
+2584. Split the Array to Make Coprime Products
+
+You are given a 0-indexed integer array nums of length n.
+
+A split at an index i where 0 <= i <= n - 2 is called valid if the product of the first i + 1 elements and the product of the remaining elements are coprime.
+
+For example, if nums = [2, 3, 3], then a split at the index i = 0 is valid because 2 and 9 are coprime, while a split at the index i = 1 is not valid because 6 and 3 are not coprime. A split at the index i = 2 is not valid because i == n - 1.
+Return the smallest index i at which the array can be split validly or -1 if there is no such split.
+
+Two values val1 and val2 are coprime if gcd(val1, val2) == 1 where gcd(val1, val2) is the greatest common divisor of val1 and val2.
+"""
+
+primes=[i for i in range(1000001)]
+for i in range(2,len(primes)):
+    j=i+i
+    while j<len(primes):
+        if primes[j]==j:
+            primes[j]=i
+        j+=i
+
+class Solution:
+    def findValidSplit(self, nums: List[int]) -> int:
+        def getDiv(n):
+            cnt=Counter()
+            while n>1:
+                p=primes[n]
+                cnt[p]+=1
+                n//=p
+            return cnt
+        
+        left,right,cur=Counter(),Counter(),0
+        for num in nums:
+            for i,j in getDiv(num).items():
+                right[i]+=j
+                
+        for idx,num in enumerate(nums):
+            for i,j in getDiv(num).items():
+                if left[i]>0 and right[i]==j:
+                    cur-=1
+                if left[i]==0 and right[i]>j:
+                    cur+=1
+                left[i]+=j
+                right[i]-=j
+            if not cur and idx!=len(nums)-1:
+                return idx
+        return -1
+
+"""
 2709. Greatest Common Divisor Traversal
 
 You are given a 0-indexed integer array nums, and you are allowed to traverse between its indices. You can traverse between index i and index j, i != j, if and only if gcd(nums[i], nums[j]) > 1, where gcd is the greatest common divisor.
