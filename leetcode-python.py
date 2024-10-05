@@ -2,6 +2,110 @@ from sortedcontainers import SortedList
 import itertools, functools, bisect 
 
 """
+1579. Remove Max Number of Edges to Keep Graph Fully Traversable
+Alice and Bob have an undirected graph of n nodes and three types of edges:
+
+Type 1: Can be traversed by Alice only.
+Type 2: Can be traversed by Bob only.
+Type 3: Can be traversed by both Alice and Bob.
+Given an array edges where edges[i] = [typei, ui, vi] represents a bidirectional edge of type typei between nodes ui and vi, find the maximum number of edges you can remove so that after removing the edges, the graph can still be fully traversed by both Alice and Bob. The graph is fully traversed by Alice and Bob if starting from any node, they can reach all other nodes.
+
+Return the maximum number of edges you can remove, or return -1 if Alice and Bob cannot fully traverse the graph.
+"""
+
+class UnionFind:
+    def __init__(self, n):
+        self.count = n                
+        self.parent = list(range(n)) 
+        self.rank = [1]*n            
+        
+    def find(self, p):
+        while p != self.parent[p]: 
+            p=self.parent[p]
+        return self.parent[p]
+    
+    def union(self, p, q):
+        prt, qrt = self.find(p), self.find(q)
+        if prt == qrt: return False
+        self.count -= 1 
+        if self.rank[prt] > self.rank[qrt]: prt, qrt = qrt, prt
+        self.parent[prt] = qrt
+        self.rank[qrt] += self.rank[prt] 
+        return True
+    
+        
+class Solution:
+    def maxNumEdgesToRemove(self, n: int, edges: List[List[int]]) -> int:
+        ufa = UnionFind(n) 
+        ufb = UnionFind(n) 
+        
+        ans = 0
+        edges.sort(reverse=True) 
+        for t, u, v in edges: 
+            u, v = u-1, v-1
+            if t == 3: ans += not (ufa.union(u, v) and ufb.union(u, v)) 
+            elif t == 2: ans += not ufb.union(u, v)                     
+            else: ans += not ufa.union(u, v)                            
+        return ans if ufa.count == 1 and ufb.count == 1 else -1
+                
+
+"""
+1671. Minimum Number of Removals to Make Mountain Array
+You may recall that an array arr is a mountain array if and only if:
+
+arr.length >= 3
+There exists some index i (0-indexed) with 0 < i < arr.length - 1 such that:
+arr[0] < arr[1] < ... < arr[i - 1] < arr[i]
+arr[i] > arr[i + 1] > ... > arr[arr.length - 1]
+Given an integer array nums​​​, return the minimum number of elements to remove to make nums​​​ a mountain array.
+"""
+
+class Solution:
+    def minimumMountainRemovals(self, nums: List[int]) -> int:
+        def f(A):
+            res,B=[],[]
+            for num in A:
+                if not B or num>B[-1]:
+                    B+=[num]
+                    res+=[len(B)]
+                else:
+                    idx=bisect_left(B,num)
+                    B[idx]=num
+                    res+=[idx+1]
+            return res
+        
+        A,B=f(nums),f(nums[::-1])[::-1]
+        mx=max([A[i]+B[i] for i in range(len(nums)) if A[i]>1 and B[i]>1] or [0])
+        return len(nums)-mx+1
+
+
+"""
+1751. Maximum Number of Events That Can Be Attended II
+You are given an array of events where events[i] = [startDayi, endDayi, valuei]. The ith event starts at startDayi and ends at endDayi, and if you attend this event, you will receive a value of valuei. You are also given an integer k which represents the maximum number of events you can attend.
+
+You can only attend one event at a time. If you choose to attend an event, you must attend the entire event. Note that the end day is inclusive: that is, you cannot attend two events where one of them starts and the other ends on the same day.
+
+Return the maximum sum of values that you can receive by attending events.
+"""
+
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:
+        events.sort()
+        
+        @cache
+        def y(idx):
+            return bisect_left(events,[events[idx][1]+1])
+        
+        @cache
+        def f(idx,rem):
+            if rem<0:
+                return -math.inf
+            if idx==len(events):
+                return 0
+            return max(f(y(idx),rem-1)+events[idx][2],f(idx+1,rem))
+        return f(0,k)
+
+"""
 1766. Tree of Coprimes
 There is a tree (i.e., a connected, undirected graph that has no cycles) consisting of n nodes numbered from 0 to n - 1 and exactly n - 1 edges. Each node has a value associated with it, and the root of the tree is node 0.
 
