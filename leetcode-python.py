@@ -2,6 +2,59 @@ from sortedcontainers import SortedList
 import itertools, functools, bisect 
 
 """
+952. Largest Component Size by Common Factor
+
+You are given an integer array of unique positive integers nums. Consider the following graph:
+
+There are nums.length nodes, labeled nums[0] to nums[nums.length - 1],
+There is an undirected edge between nums[i] and nums[j] if nums[i] and nums[j] share a common factor greater than 1.
+Return the size of the largest connected component in the graph.
+"""
+
+primes=list(range(100001))
+for i in range(2,100001):
+    j=i+i
+    while j<len(primes):
+        if primes[j]==j:
+            primes[j]=i
+        j+=i
+
+class Solution:
+    def largestComponentSize(self, nums: List[int]) -> int:
+        d=defaultdict(set)
+        for i in nums:
+            if i not in d:
+                init=i
+                while i>1:
+                    prime=primes[i]
+                    d[init].add(prime)
+                    i//=prime
+        
+        par,rank={},Counter()
+        
+        def find(i):
+            if i not in par:
+                par[i]=i
+            while i!=par[i]:
+                i=par[i]
+            return par[i]
+        
+        def union(x,y):
+            px,py=find(x),find(y)
+            if px==py:return False
+            if rank[py]>rank[px]:px,py=py,px
+            rank[px]+=rank[py]
+            par[py]=px
+            return True
+            
+        for i in nums:
+            for j in d[i]:
+                union(i,j)
+            rank[find(i)]+=1
+                
+        return max(rank[find(i)] for i in nums)
+
+"""
 1579. Remove Max Number of Edges to Keep Graph Fully Traversable
 Alice and Bob have an undirected graph of n nodes and three types of edges:
 
