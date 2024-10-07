@@ -70,8 +70,7 @@ def bingoSort(A):
     nextBingo=maxValue 
     nextAvail=0
     while bingo<maxValue:
-        startPos=nextAvail 
-        for i in range(startPos,len(A)):
+        for i in range(nextAvail,len(A)):
             if A[i]==bingo:
                 A[nextAvail],A[i]=A[i],A[nextAvail]
                 nextAvail+=1
