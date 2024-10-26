@@ -234,6 +234,22 @@ def dfs(node):
 dfs(7)   
 
 #-------------------------------------------------
+
+#bfs implementation
+
+A=[[],[2,3,8,9],[1,3,4,7],[1,2,4],[2,3,5,6,7],[4,6],[5,9],[2,4,8],[1,7],[1,6]]
+queue=collections.deque([7])
+visited=set() 
+
+while queue:
+    node=queue.popleft()
+    if node in visited:
+        continue 
+    visited.add(node)
+    #print(node)
+    for nxt in A[node]:
+        if nxt not in visited:
+            queue.append(nxt)
     
 
 
