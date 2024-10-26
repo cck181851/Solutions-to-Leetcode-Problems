@@ -60,6 +60,32 @@ def partition(A,low,high):
 #quickSort(A,0,len(A)-1)
 #print(A)  
 
+---------------------------------------------------------
+
+#quickSort algorithm generalized for any pivot
+
+def quickSort(A,low,high):
+    if low<high: 
+        pivot=select(A,low,high)
+        quickSort(A,low,pivot-1)
+        quickSort(A,pivot+1,high)
+    
+def select(A,low,high):
+    left=low-1 
+    pivot_index=(low+high)//2
+    pivot=A[pivot_index]
+    for i in range(low,high+1):
+        if A[i]<=pivot:
+            if A[i]==pivot:
+                pivot_index=left+1
+            A[left+1],A[i]=A[i],A[left+1]
+            left+=1 
+    A[pivot_index],A[left]=A[left],A[pivot_index]    
+    return left
+    
+quickSort(A,0,len(A)-1)
+#print(A)
+
 #--------------------------------------------------------
 #bingo sort implementation
 
