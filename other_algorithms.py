@@ -192,3 +192,54 @@ while node:
     B+=[node.val]
     node=node.next
 print(B==sorted(B))
+
+#-------------------------------------------------------
+
+#iterative implementation of DFS
+
+graph=[[],[2,3,8,9],[1,3,4,7],[1,2,4],[2,3,5,6,7],[4,6],[5,9],[2,4,8],[1,7],[1,6]]
+visited={7}
+
+def next(node):
+    for i in graph[node]:
+        if i not in visited:
+            return i 
+    return None 
+    
+node=7    
+stack=[]   
+nxt=next(node)
+
+while nxt or stack:
+    if nxt:
+        stack+=[node]
+        visited.add(nxt)        
+        node=nxt
+        #print(node)
+    else:
+        node=stack.pop()
+    nxt=next(node)
+
+#recursive version
+
+visited=set()
+def dfs(node):
+    if node in visited:
+        return 
+    #print(node)
+    visited.add(node)
+    for nxt in A[node]:
+        dfs(nxt)
+    
+dfs(7)   
+
+#-------------------------------------------------
+    
+
+
+
+
+
+
+
+
