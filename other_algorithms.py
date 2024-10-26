@@ -60,7 +60,7 @@ def partition(A,low,high):
 #quickSort(A,0,len(A)-1)
 #print(A)  
 
----------------------------------------------------------
+#------------------------------------------------------------
 
 #quickSort algorithm generalized for any pivot
 
