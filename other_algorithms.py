@@ -251,7 +251,41 @@ while queue:
         if nxt not in visited:
             queue.append(nxt)
     
+#-----------------------------------------------
+#even-odd mergeSort
 
+import random 
+
+A=[random.randint(1,10) for _ in range(32)]
+
+def mergeSort(A):
+    if len(A)>1:       
+        mid=len(A)//2
+        left=mergeSort(A[:mid])
+        right=mergeSort(A[mid:])         
+        return merge(left+right)
+    else:
+        return A
+
+def swap(A,i,j):
+    A[i],A[j]=A[j],A[i]
+
+def merge(A):
+    if len(A)<=2:
+        return sorted(A)
+    else:
+        odd,even=merge(A[1::2]),merge(A[0::2])
+        res=[0 for _ in range(len(odd)+len(even))]
+        for i in range(len(odd)): 
+            res[2*i+1]=odd[i]            
+            res[2*i]=even[i]
+        for i in range(1,len(res)-1,2):
+            if res[i]>res[i+1]:
+                swap(res,i,i+1)
+        return res
+
+print(A)
+print(mergeSort(A)) 
 
 
 
