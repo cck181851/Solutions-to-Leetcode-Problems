@@ -1325,3 +1325,222 @@ class Solution:
                     if idx>0:add(idx,change)
                     
         return res
+
+```
+1632. Rank Transform of a Matrix
+Given an m x n matrix, return a new matrix answer where answer[row][col] is the rank of matrix[row][col].
+
+The rank is an integer that represents how large an element is compared to other elements. It is calculated using the following rules:
+
+The rank is an integer starting from 1.
+If two elements p and q are in the same row or column, then:
+If p < q then rank(p) < rank(q)
+If p == q then rank(p) == rank(q)
+If p > q then rank(p) > rank(q)
+The rank should be as small as possible.
+The test cases are generated so that answer is unique under the given rules.
+ 
+```
+
+class Solution:
+    def matrixRankTransform(self, matrix: List[List[int]]) -> List[List[int]]:
+        A=defaultdict(list)
+        m,n=len(matrix),len(matrix[0])
+        rank=[0]*(m+n)
+        for i in range(m):
+            for j in range(n):
+                A[matrix[i][j]].append((i,j))
+
+        def find(par,x):
+            while x!=par[x]:
+                x=par[x]
+            return par[x]
+
+        def union(par,x,y,rank):
+            px,py=find(par,x),find(par,y)
+            if rank[py]>rank[px]:px,py=py,px
+            par[py]=px
+
+        for _,vals in sorted(A.items()):
+            par=[i for i in range(m+n)]
+            rank_tmp=rank.copy()
+            for i,j in vals:
+                union(par,i,j+m,rank)
+            for i,j in vals:    
+                pi,pj=find(par,i),find(par,j+m)
+                rank_tmp[i]=max(rank_tmp[i],rank[pi]+1,rank[pj]+1)
+                rank_tmp[j+m]=max(rank_tmp[j+m],rank[pj]+1,rank[pi]+1)
+                matrix[i][j]=rank_tmp[i]
+            rank=rank_tmp           
+
+        return matrix        
+
+```
+1998. GCD Sort of an Array
+You are given an integer array nums, and you can perform the following operation any number of times on nums:
+
+Swap the positions of two elements nums[i] and nums[j] if gcd(nums[i], nums[j]) > 1 where gcd(nums[i], nums[j]) is the greatest common divisor of nums[i] and nums[j].
+Return true if it is possible to sort nums in non-decreasing order using the above swap method, or false otherwise.
+```
+
+primes=[i for i in range(100001)]
+for i in range(2,100001):
+    j=i+i
+    while j<len(primes):
+        if primes[j]==j:
+            primes[j]=i
+        j+=i       
+
+d=defaultdict(set)
+for i in range(2,100001):
+    init=i
+    while i>1:
+        prime=primes[i]
+        d[init].add(prime)
+        i//=prime             
+
+class Solution:
+    def gcdSort(self, nums: List[int]) -> bool:
+        par,rank=dict(),dict()        
+
+        def find(x):
+            if x not in par:
+                par[x],rank[x]=x,1
+            while par[x]!=x:
+                x=par[x]
+            return par[x] 
+
+        def union(x,y):
+            px,py=find(x),find(y)
+            if rank[py]>rank[px]:py,px=px,py
+            rank[px]+=rank[py]
+            par[py]=px
+
+        for i in nums:
+            for j in d[i]:
+                union(i,j)
+                
+        A=sorted(nums)    
+        return all(find(par[nums[i]])==find(par[A[i]]) for i in range(len(A)))        
+                
+```
+
+2713. Maximum Strictly Increasing Cells in a Matrix
+
+Given a 1-indexed m x n integer matrix mat, you can select any cell in the matrix as your starting cell.
+
+From the starting cell, you can move to any other cell in the same row or column, but only if the value of the destination cell is strictly greater than the value of the current cell. You can repeat this process as many times as possible, moving from cell to cell until you can no longer make any moves.
+
+Your task is to find the maximum number of cells that you can visit in the matrix by starting from some cell.
+
+Return an integer denoting the maximum number of cells that can be visited.
+    
+```
+
+class Solution:
+    def maxIncreasingCells(self, mat: List[List[int]]) -> int:
+        m,n=len(mat),len(mat[0])
+        vals=defaultdict(list)
+        for i in range(m):
+            for j in range(n):
+                vals[mat[i][j]].append((i,j)) 
+        dp=[0]*(m+n)
+      
+        for val,A in sorted(vals.items()):
+            np=Counter()
+            for r,c in A:
+                i,j=r,m+c
+                np[i]=max(np[i],max(dp[i],dp[j])+1)
+                np[j]=max(np[j],max(dp[i],dp[j])+1)
+            for r,c in A:
+                i,j=r,m+c
+                dp[i],dp[j]=max(dp[i],np[i]),max(dp[j],np[j])
+
+        return max(dp)        
+                
+```
+2736. Maximum Sum Queries
+
+You are given two 0-indexed integer arrays nums1 and nums2, each of length n, and a 1-indexed 2D array queries where queries[i] = [xi, yi].
+
+For the ith query, find the maximum value of nums1[j] + nums2[j] among all indices j (0 <= j < n), where nums1[j] >= xi and nums2[j] >= yi, or -1 if there is no j satisfying the constraints.
+
+Return an array answer where answer[i] is the answer to the ith query.
+```
+
+class Solution:
+    def maximumSumQueries(self, nums1: List[int], nums2: List[int], queries: List[List[int]]) -> List[int]:
+        n=len(nums2)
+        tree=[-1]*4*n
+        
+        def add(left,right,idx,pos,val):
+            if left==right:
+                tree[idx]=val
+                return
+            mid=(left+right)//2
+            if pos<=mid:
+                add(left,mid,idx*2+1,pos,val)
+            else:
+                add(mid+1,right,idx*2+2,pos,val)
+            tree[idx]=max(tree[idx*2+1],tree[idx*2+2])
+            
+        def query(left,right,qleft,qright,idx):
+            if qright<left or right<qleft:
+                return -1
+            if qleft<=left<=right<=qright:
+                return tree[idx]
+            mid=(left+right)//2
+            i=query(left,mid,qleft,qright,idx*2+1)
+            j=query(mid+1,right,qleft,qright,idx*2+2)
+            return max(i,j)
+        
+        B=sorted(nums2)
+        c=defaultdict(list)
+        for idx,i in enumerate(B):
+            c[i].append(idx)
+        
+        A=sorted([i,idx] for idx,i in enumerate(nums1))
+        res,p=[-1]*len(queries),len(A)-1
+        for idx,[x,y] in sorted(enumerate(queries),key=lambda x:-x[1][0]):
+            while p>=0 and A[p][0]>=x:
+                ind=A[p][1]
+                p-=1
+                add(0,n,0,c[nums2[ind]].pop(),nums1[ind]+nums2[ind])
+            tmp_idx=bisect_left(B,y)
+            res[idx]=query(0,n,tmp_idx,n,0)
+        return res
+
+```
+996. Number of Squareful Arrays
+
+An array is squareful if the sum of every pair of adjacent elements is a perfect square.
+
+Given an integer array nums, return the number of permutations of nums that are squareful.
+
+Two permutations perm1 and perm2 are different if there is some index i such that perm1[i] != perm2[i].
+
+```
+class Solution:
+    def numSquarefulPerms(self, nums: List[int]) -> int:
+        def h(a,b):
+            return int(sqrt(a+b))**2==(a+b)
+
+        @cache
+        def f(idx,mask):
+            res={str(nums[idx])}
+            for nxt in range(len(nums)):
+                if (1<<nxt)&mask or not h(nums[nxt],nums[idx]):continue                
+                for suf in f(nxt,mask^(1<<nxt)):
+                    res.add(str(nums[idx])+"-"+suf)                       
+            return res
+
+        res=set()
+        for i in range(len(nums)):
+            res|=f(i,1<<i)
+
+        return sum(1 if len(i.split("-"))==len(nums) else 0 for i in res)  
+
+
+
+
+    
