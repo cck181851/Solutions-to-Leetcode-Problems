@@ -1675,4 +1675,160 @@ public:
     }
 };
 
+/*
+862. Shortest Subarray with Sum at Least K
+
+Given an integer array nums and an integer k, return the length of the shortest non-empty subarray of nums with a sum of at least k. If there is no such subarray, return -1.
+
+A subarray is a contiguous part of an array.
+*/
+
+class Solution {
+public:
+    int shortestSubarray(vector<int>& nums, int k) {
+        vector<long long> A(nums.size()+1,0),B(nums.size()+1,0);        
+        for(int i=0;i<nums.size();i++){
+            A[i+1]=A[i]+nums[i];
+        }
+        iota(B.begin(),B.end(),0);              
+        sort(B.begin(),B.end(),[&](auto x,auto y){return A[x]<A[y];});
+
+        multiset<int> C;
+        long long res=-1,p=0;
+        for(int idx:B){
+            long long i=A[idx];
+            while(A[B[p]]<=i-k){
+                C.insert(B[p++]);
+            }
+            auto j=C.lower_bound(idx);
+            if(j!=C.begin()){
+                long long cur=abs(idx-*prev(j));
+                if(res==-1 || res>-1 && cur<res) res=cur;
+            } 
+        }
+        return res;
+    }
+};
+
+/*
+2552. Count Increasing Quadruplets
+
+Given a 0-indexed integer array nums of size n containing all numbers from 1 to n, return the number of increasing quadruplets.
+
+A quadruplet (i, j, k, l) is increasing if:
+
+0 <= i < j < k < l < n, and
+nums[i] < nums[k] < nums[j] < nums[l].
+
+*/
+
+class Solution {
+public:
+    long long countQuadruplets(vector<int>& nums) {
+        int n = nums.size();
+        vector<int> small(4 * n, 0), big(4 * n, 0);
+        unordered_map<int, int> idx;
+        
+        for (int i = 0; i < n; ++i) {
+            idx[nums[i]] = i;
+        }
+        
+        auto addVal = [](vector<int>& tree, int idx, int val) {
+            ++idx;
+            while (idx < tree.size()) {
+                tree[idx] += val;
+                idx += idx & (-idx);
+            }
+        };
+        
+        auto getVal = [](vector<int>& tree, int idx) {
+            ++idx;
+            int val = 0;
+            while (idx > 0) {
+                val += tree[idx];
+                idx -= idx & (-idx);
+            }
+            return val;
+        };
+        
+        long long res = 0;
+        for (int k = 1; k <= n; ++k) {
+            fill(big.begin(), big.end(), 0);
+            for (int j = n; j > k; --j) {
+                int ki = idx[k], ji = idx[j];
+                if (ji < ki) {
+                    long long left = getVal(small, ji - 1);
+                    long long right = getVal(big, n - 1) - getVal(big, ki);
+                    res += left * right;
+                }
+                addVal(big, idx[j], 1);
+            }
+            addVal(small, idx[k], 1);
+        }
+        return res;
+    }
+};
+
+/*
+
+1862. Sum of Floored Pairs
+
+Given an integer array nums, return the sum of floor(nums[i] / nums[j]) for all pairs of indices 0 <= i, j < nums.length in the array. Since the answer may be too large, return it modulo 109 + 7.
+
+The floor() function returns the integer part of the division.
+
+*/
+
+class Solution {
+public:
+    static constexpr int mod = 1'000'000'007;
+    
+    int sumOfFlooredPairs(vector<int>& nums) {
+        int mx = *max_element(nums.begin(), nums.end());
+        long long res = 0;
+        vector<int> tree(4 * mx, 0);
+        unordered_map<int, int> cnt;
+        
+        for (int num : nums) {
+            cnt[num]++;
+        }
+        
+        auto addVal = [&](int idx, int val) {
+            idx++;
+            while (idx < tree.size()) {
+                tree[idx] += val;
+                idx += idx & (-idx);
+            }
+        };
+        
+        auto getVal = [&](int idx) {
+            long long sum = 0;
+            idx++;
+            while (idx > 0) {
+                sum += tree[idx];
+                idx -= idx & (-idx);
+            }
+            return sum;
+        };
+        
+        for (int num : nums) {
+            addVal(num, 1);
+        }
+        
+        for (int i = 1; i <= mx; i++) {
+            int freq = cnt[i];
+            if (freq == 0) continue;
+            
+            for (int j = i; j <= mx; j += i) {
+                int d = j / i;
+                int left = max(0, j);
+                int right = min(mx, j + i - 1);
+                long long tot = getVal(right) - getVal(left - 1);
+                res = (res + (long long)freq * tot * d) % mod;
+            }
+        }
+        
+        return res;
+    }
+};
 
